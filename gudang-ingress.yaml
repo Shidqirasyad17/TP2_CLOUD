@@ -3,8 +3,9 @@ kind: Ingress
 metadata:
   name: gudang-ingress
 spec:
+  ingressClassName: nginx
   rules:
-    http:
+  - http:
       paths:
       - path: /api
         pathType: Prefix
