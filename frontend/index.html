@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head><title>Gudang Barang Teknologi</title>
+<style>
+    body {
+        font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #0d1527;
+        color:white;
+        padding: 40px;
+        max-width: 800px;
+        margin: auto;
+    }    
+    h1 {
+        color: #d40000;
+    }
+    button {
+        background-color: #d40000;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        border-radius: 5px;
+    }
+    button:hover{
+        background-color: #a30000;
+    }
+    input {
+        padding: 10px;
+        font-size: 16px;
+        width: 300px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+    }
+    ol {
+        display:inline-block; 
+        text-align: start;           
+    }
+
+    li {
+        padding: 5px 0;
+    }
+
+    h1#Barang-name {
+        font-size: 32px;
+        text-align: center;
+        margin-bottom: auto;
+    }
+
+    div#input-section {
+        margin-top: 30px;
+        text-align: center;
+    }
+
+    p#owner-info {
+        font-size: 13px;
+        margin-bottom: 20px;
+    }
+</style>
+</head>
+<body>
+    <p id="owner-info">Memuat data Owner.....</p>
+    <h1 id="Barang-name">Cek Gudang dulu...</h1>
+    <ol id="barang-list"></ol>
+
+    <hr>
+    <div id="input-section">
+    <h3>Input Barang Masuk:</h3>
+    <input type="text" id="barang-input" placeholder="Nama barang...">
+    <button onclick="tambahBarang()">Tambah Ke Gudang</button>
+
+    </div>
+    
+
+    <script>
+        const API_URL = '/api';
+
+
+        function loadData() {
+            fetch(`${API_URL}/info`)
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('Barang-name').innerText = data.judul_katalog;
+                    const list = document.getElementById('barang-list');
+                    const ownerInfo = document.getElementById('owner-info');
+                    ownerInfo.innerText = `Nama: ${data.pemilik} 
+                    NIM: ${data.nim}`;
+                    list.innerHTML = '';
+                    data.items.forEach(item => {
+                        let li = document.createElement('li');
+                        li.innerText = item;
+                        list.appendChild(li);
+                    });
+                });
+        }
+
+
+        function tambahBarang() {
+            const input = document.getElementById('barang-input');
+            fetch(`${API_URL}/add-item`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ item: input.value })
+            })
+            .then(res => res.json())
+            .then(() => {
+                input.value = '';
+                loadData();
+            });
+        }
+
+
+        loadData();
+    </script>
+</body>
+</html>
