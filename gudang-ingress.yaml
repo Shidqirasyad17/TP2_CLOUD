@@ -3,7 +3,6 @@ kind: Ingress
 metadata:
   name: gudang-ingress
 spec:
-  ingressClassName: nginx
   rules:
     http:
       paths:
