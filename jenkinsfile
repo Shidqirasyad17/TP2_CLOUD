@@ -1,4 +1,3 @@
-
 pipeline {
     agent any
     environment {
@@ -27,6 +26,7 @@ pipeline {
             steps {
                 withKubeConfig([credentialsId: 'aks-config']) {
                     sh "kubectl apply -f gudang-k8s.yaml"
+                    sh "kubectl apply -f gudang-ingress.yaml"
                     sh "kubectl rollout restart deployment backend-gudang"
                     sh "kubectl rollout restart deployment frontend-gudang"
                 }
