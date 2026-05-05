@@ -1,61 +1,37 @@
+
 pipeline {
     agent any
     environment {
-        // Ganti dengan username Docker Hub yang sesuai
-        DOCKER_HUB_USER = ''
-        // ID kredensial yang dibuat di 'Add Credentials' tadi
-        DOCKER_HUB_ID   = 'dockerhub-login'
-        // URL repo GitHub aplikasi
-        GIT_REPO_URL    = 'https://github.com/Shidqirasyad17/TP2_CLOUD.git'
+        DOCKER_USER = "sidra17" 
+        GIT_REPO_URL = "https://github.com/Shidqirasyad17/TP2_CLOUD.git"
     }
-
-
     stages {
         stage('Checkout Code') {
             steps {
-                // Tahap mengambil kode terbaru dari repositori, pastikan branch sesuai yang digunakan
                 git branch: 'main', url: "${GIT_REPO_URL}"
             }
         }
-
-
-        stage('Build Images') {
+        stage('Build & Push Docker Image') {
             steps {
-                withCredentials([usernamePassword(credentialsId: "${DOCKER_HUB_ID}",
-                                passwordVariable: 'PASS',
-                                usernameVariable: 'USER')]) {
-                    sh 'echo ${PASS}| docker login -u ${USER} --password-stdin'
-                   
-                    sh "docker build -t ${DOCKER_HUB_USER}/gudang-backend:latest ./backend"
-                    sh "docker build -t ${DOCKER_HUB_USER}/gudang-frontend:latest ./frontend"
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-login', passwordVariable: 'PASS', usernameVariable: 'USER')]) {
+                    sh "docker build -t ${USER}/gudang-backend:latest ./backend"
+                    sh "docker build -t ${USER}/gudang-frontend:latest ./frontend"
+                    
+                    sh "echo ${PASS} | docker login -u ${USER} --password-stdin"
+                    sh "docker push ${USER}/gudang-backend:latest"
+                    sh "docker push ${USER}/gudang-frontend:latest"
                 }
             }
         }
-
-
-        stage('Push to Docker Hub') {
+        stage('Deploy ke Azure AKS') {
             steps {
-                withCredentials([usernamePassword(credentialsId: "${DOCKER_HUB_ID}",
-                                passwordVariable: 'PASS',
-                                usernameVariable: 'USER')]) {
-                    sh "echo ${PASS}| docker login -u ${USER} --password-stdin"
-                    sh "docker push ${DOCKER_HUB_USER}/gudang-backend:latest"
-                    sh "docker push ${DOCKER_HUB_USER}/gudang-frontend:latest"
-                }
-            }
-        }
-
-
-        stage('Deploy to Kubernetes') {
-            steps {
-                echo 'Deploying to Kubernetes using Secret File...'
-                // Jenkins akan mengambil file 'kube-config' dan menaruhnya di folder temporary
-                withCredentials([file(credentialsId: 'kube-config', variable: 'KUBECONFIG_FILE')]) {
-                    // Kita panggil kubectl dengan bendera --kubeconfig yang mengarah ke file temp tadi
-                    sh 'kubectl --kubeconfig=${KUBECONFIG_FILE} apply -f gudang-k8s.yaml --validate=false'
-                    sh 'kubectl --kubeconfig=${KUBECONFIG_FILE} apply -f gudang-ingress.yaml --validate=false'
+                withKubeConfig([credentialsId: 'aks-config']) {
+                    sh "kubectl apply -f gudang-k8s.yaml"
+                    sh "kubectl rollout restart deployment backend-gudang"
+                    sh "kubectl rollout restart deployment frontend-gudang"
                 }
             }
         }
     }
 }
+
