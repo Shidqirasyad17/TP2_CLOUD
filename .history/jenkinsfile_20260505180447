@@ -24,10 +24,10 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: "${DOCKER_HUB_ID}",
                                 passwordVariable: 'PASS',
                                 usernameVariable: 'USER')]) {
-                    sh 'echo ${PASS}| docker login -u ${USER} --password-stdin'
+                    sh 'echo %PASS%| docker login -u %USER% --password-stdin'
                    
-                    sh "docker build -t ${DOCKER_HUB_USER}/gudang-backend:latest ./backend"
-                    sh "docker build -t ${DOCKER_HUB_USER}/gudang-frontend:latest ./frontend"
+                    sh "docker build -t %DOCKER_HUB_USER%/gudang-backend:latest ./backend"
+                    sh "docker build -t %DOCKER_HUB_USER%/gudang-frontend:latest ./frontend"
                 }
             }
         }
@@ -38,9 +38,9 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: "${DOCKER_HUB_ID}",
                                 passwordVariable: 'PASS',
                                 usernameVariable: 'USER')]) {
-                    sh "echo ${PASS}| docker login -u ${USER} --password-stdin"
-                    sh "docker push ${DOCKER_HUB_USER}/gudang-backend:latest"
-                    sh "docker push ${DOCKER_HUB_USER}/gudang-frontend:latest"
+                    sh "echo %PASS%| docker login -u %USER% --password-stdin"
+                    sh "docker push %DOCKER_HUB_USER%/gudang-backend:latest"
+                    sh "docker push %DOCKER_HUB_USER%/gudang-frontend:latest"
                 }
             }
         }
@@ -52,8 +52,8 @@ pipeline {
                 // Jenkins akan mengambil file 'kube-config' dan menaruhnya di folder temporary
                 withCredentials([file(credentialsId: 'kube-config', variable: 'KUBECONFIG_FILE')]) {
                     // Kita panggil kubectl dengan bendera --kubeconfig yang mengarah ke file temp tadi
-                    sh 'kubectl --kubeconfig=${KUBECONFIG_FILE} apply -f gudang-k8s.yaml --validate=false'
-                    sh 'kubectl --kubeconfig=${KUBECONFIG_FILE} apply -f gudang-ingress.yaml --validate=false'
+                    sh 'kubectl --kubeconfig=%KUBECONFIG_FILE% apply -f gudang-k8s.yaml --validate=false'
+                    sh 'kubectl --kubeconfig=%KUBECONFIG_FILE% apply -f gudang-ingress.yaml --validate=false'
                 }
             }
         }
